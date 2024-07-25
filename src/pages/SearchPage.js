@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchNews } from '../actions/index';
 import Spinner from '../components/Spinner';
 import NewsGrid from '../components/NewsGrid';
+import debounce from 'lodash.debounce';
+import MemoryUsageDisplay from '../components/MemoryUsage';
+import { trackEvents } from '../utils/tracking';
+import useIsMobile from '../hooks/useIsMobile';
 
 const SearchPage = () => {
   const [query, setQuery] = useState('');
@@ -9,24 +13,53 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('popularity');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalResults, setTotalResults] = useState(0);
+  const [totalPages, setTotalPages] = useState(0); 
+  const {isMobile, windowWidth} = useIsMobile();
 
-  const fetchNewsData = useCallback(async () => {
+  // Fetch news data function
+  const fetchNewsData = async (pageNum = 1, query, sortBy = "popularity") => {
     if (!query) return;
 
     setLoading(true);
+    setArticles([]);
     try {
-      const data = await fetchNews({ q: query, sortBy });
-      setArticles(data);
+      const { articles, totalResults: total } = await fetchNews({ q: query, sortBy, page: pageNum, pageSize: 20 });
+        setArticles(articles);
+      
+
+      trackEvents("fetching_details",{"text": query});
+      setTotalResults(total);
+      setTotalPages(Math.ceil(total / 20)); 
+      setHasMore(pageNum < totalPages); 
     } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);
     }
-  }, [query, sortBy]);
+  };
 
+  // Debounced fetch function using lodash
+  const debouncedFetchNewsData = useCallback(debounce(fetchNewsData, 300), []);
+
+  // Fetch news data on query or sort change
   useEffect(() => {
-    fetchNewsData();
-  }, [fetchNewsData]);
+    debouncedFetchNewsData(1, query, sortBy); 
+  }, [query, sortBy, debouncedFetchNewsData]);
+
+  const loadMoreRows = useCallback(() => {
+    if (hasMore && !loading) {
+      setPage(prevPage => {
+        const newPage = prevPage + 1;
+        debouncedFetchNewsData(newPage, query, sortBy);
+        return newPage;
+      });
+    }
+  }, [hasMore, loading, debouncedFetchNewsData, query, sortBy]);
+
+  const isRowLoaded = ({ index }) => !!articles[index];
 
   const handleSearchChange = (event) => {
     setQuery(event.target.value);
@@ -38,32 +71,41 @@ const SearchPage = () => {
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
-    fetchNewsData();
+    setArticles([]); 
+    setPage(1); 
+    debouncedFetchNewsData(1, query, sortBy); 
   };
 
-  console.log("articles lenght", articles.length)
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setPage(newPage);
+      trackEvents("page_changed",{"currentPageNo": newPage});
+      debouncedFetchNewsData(newPage, query, sortBy);
+    }
+  };
+
   return (
     <div className="p-4 max-w-screen-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Search News</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">News App</h1>
 
-      {/* Search Form */}
-      <form onSubmit={handleSearchSubmit} className="mb-4">
+      <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Search News</h3>
+
+      <form onSubmit={handleSearchSubmit} className="mb-4 flex items-center">
         <input
           type="text"
           value={query}
           onChange={handleSearchChange}
           placeholder="Search for news..."
-          className="p-2 border rounded-lg w-full"
+          className="p-2 border rounded-lg flex-grow"
         />
         <button
           type="submit"
-          className="p-2 bg-blue-500 text-white rounded-lg mt-2"
+          className="p-2 bg-blue-500 text-white rounded-lg ml-2"
         >
           Search
         </button>
       </form>
 
-      {/* Sorting Options */}
       <div className="mb-4">
         <label className="mr-2">Sort by:</label>
         <select
@@ -78,10 +120,39 @@ const SearchPage = () => {
 
       {loading && <Spinner />}
       {error && <div className="text-center py-4 text-red-500">{error}</div>}
-      {!loading && !error && articles.length === 0 ? 
+      {!loading && !error && articles.length === 0 ? (
         <div>Search for news</div>
-      :
-      <NewsGrid articles={articles} columnWidth={311} rowHeight={270} />}
+      ) : (
+        <>
+          <NewsGrid
+            articles={articles}
+            columnWidth={isMobile ? windowWidth : 311}
+            rowHeight={320}
+            loadMoreRows={loadMoreRows}
+            isRowLoaded={isRowLoaded}
+            rowCount={totalResults}
+          />
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="p-2 bg-blue-500 text-white rounded-lg mx-2"
+            >
+              Previous
+            </button>
+            <span className="p-2">{`Page ${page} of ${totalPages}`}</span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              className="p-2 bg-blue-500 text-white rounded-lg mx-2"
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
+
+      <MemoryUsageDisplay />
     </div>
   );
 };

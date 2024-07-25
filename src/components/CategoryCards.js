@@ -1,11 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import { trackEvents } from '../utils/tracking';
 
 const CategoryCard = ({ category }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    trackEvents("open_category",{"category": category.name});
+
     navigate(`/news?category=${category.name.toLowerCase()}`);
   };
 

@@ -5,11 +5,15 @@ import { fetchTopHeadlines } from "../actions/index";
 import { CATEGORIES } from "../utils/constants";
 import Spinner from "../components/Spinner/index";
 import NewsGrid from "../components/NewsGrid"; // Import the new component
+import MemoryUsageDisplay from "../components/MemoryUsage";
+import useIsMobile from "../hooks/useIsMobile";
 
 const HomePage = () => {
   const [headlines, setHeadlines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const {isMobile, windowWidth} = useIsMobile();
+
 
   const fetchHeadlines = useCallback(async () => {
     setLoading(true);
@@ -29,14 +33,15 @@ const HomePage = () => {
     fetchHeadlines();
   }, [fetchHeadlines]);
 
+
   return (
     <div className="p-4 max-w-screen-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-gray-100">
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
         News App
       </h1>
 
       <div className="mb-4 w-full flex justify-end">
-        <div className="w-[20%]">
+        <div className="w-[35%]">
 
         <Link to="/search">
           <button className="p-2 bg-blue-500 text-white rounded-lg w-full">
@@ -47,22 +52,25 @@ const HomePage = () => {
 
       </div>
 
+      <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Top Categories</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8">
         {CATEGORIES.map((cat) => (
           <CategoryCard key={cat.name} category={cat} />
         ))}
       </div>
 
-      <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+      <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
         Top Headlines
-      </h2>
+      </h3>
 
       {loading && <Spinner />}
       {error && <div className="text-center py-4 text-red-500">{error}</div>}
 
       {!error && !loading && (
-        <NewsGrid articles={headlines} columnWidth={311} rowHeight={240} />
+        <NewsGrid articles={headlines} columnWidth={isMobile ? (windowWidth) : 311} rowHeight={240} />
       )}
+
+      <MemoryUsageDisplay/>
     </div>
   );
 };
