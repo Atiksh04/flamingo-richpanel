@@ -1,5 +1,3 @@
-
-
 ### Setup intructions
 - clone this repo
 - npm install
@@ -15,7 +13,10 @@
 - Due to time constraint I have not added test cases as of now.
 
 ### Screenshots
-
+![Desktop_home](assets/desktop_home.png)
+![Desktop_search](assets/desktop_search.png)
+![Mobile_home](assets/mobile_home.png)
+![Mobile_search](assets/mobile_search.png)
 
 ### Performance Optimizations 
 - I have used pagination in api responses.
