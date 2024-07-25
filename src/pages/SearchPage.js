@@ -42,7 +42,10 @@ const SearchPage = () => {
   };
 
   // Debounced fetch function using lodash
-  const debouncedFetchNewsData = useCallback(debounce(fetchNewsData, 300), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedFetchNewsData = useCallback(debounce((page, query, sortBy) => {
+    fetchNewsData(page, query, sortBy);
+  }, 300), []);
 
   // Fetch news data on query or sort change
   useEffect(() => {
