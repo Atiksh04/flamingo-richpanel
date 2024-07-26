@@ -11,6 +11,7 @@
 ### Limitations
 - The NewsAPI, as provided in the link, does not support hosted apps on the free plan. To check the functionality, please run this on a local machine.
 - Due to time constraint I have not added test cases as of now.
+- I'm using the performance.memory API to compute memory usage. This API is not supported on all browsers, so please check using Chrome on a desktop.
 
 ### Screenshots
 ![Desktop_home](assets/desktop_home.png)
