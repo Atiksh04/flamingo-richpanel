@@ -3,7 +3,7 @@ export const fetchNews = async ({ q = "news", sortBy = "popularity", pageSize = 
     const response = await fetch(
       `https://newsapi.org/v2/everything?q=${encodeURIComponent(
         q
-      )}&searchIn=title,description,content&sortBy=${sortBy}&apiKey=5523f2ca61ae4761aaeb9a26a175d00d&sources=bbc-news&pageSize=${pageSize}&page=${page}`
+      )}&searchIn=title,description,content&sortBy=${sortBy}&apiKey=f11fa87c8b2a4c3c8c0eeb6c129294d8&sources=bbc-news&pageSize=${pageSize}&page=${page}`
     );
 
     if (!response.ok) {
@@ -39,7 +39,7 @@ export const fetchNews = async ({ q = "news", sortBy = "popularity", pageSize = 
 export const fetchTopHeadlines = async ({ category = "general" }) => {
   try {
     const response = await fetch(
-      `https://newsapi.org/v2/top-headlines/sources?apiKey=5523f2ca61ae4761aaeb9a26a175d00d&category=${category}&language=en`
+      `https://newsapi.org/v2/top-headlines/sources?apiKey=f11fa87c8b2a4c3c8c0eeb6c129294d8&category=${category}&language=en`
     );
 
     if (!response.ok) {
